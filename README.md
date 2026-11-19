@@ -100,52 +100,90 @@ Where:
 
 ```python
 
-
+import gymnasium as gym
+import numpy as np
+env = gym.make(
+    "FrozenLake-v1",
+    map_name="4x4",
+    is_slippery=True
+)
+env = env.unwrapped
+n_states = env.observation_space.n
+n_actions = env.action_space.n
+gamma = 0.99
+theta = 1e-8
+policy = np.ones((n_states, n_actions)) / n_actions
+V = np.zeros(n_states)
 # -------------------------------------------------
 # Policy Evaluation Function
 # -------------------------------------------------
-
-
+def policy_evaluation(env, policy, gamma=0.99, theta=1e-8):
+    # Initialize the value function
+    V = np.zeros(env.observation_space.n)
+    iteration = 0
+    while True:
+        delta = 0
+        for state in range(env.observation_space.n):
+            v = 0
+            for action in range(env.action_space.n):
+                action_prob = policy[state, action]
+                for prob, next_state, reward, terminated in env.P[state][action]:
+                    v += action_prob * prob * (
+                        reward + gamma * V[next_state] * (not terminated)
+                    )
+            delta = max(delta, abs(V[state] - v))
+            V[state] = v
+        iteration += 1
+        if delta < theta:
+            break
+    return V, iteration
+# -------------------------------------------------
+# Run Policy Evaluation
+# -------------------------------------------------
+V, iterations = policy_evaluation(env, policy, gamma, theta)
 # -------------------------------------------------
 # Display Output
 # -------------------------------------------------
-
-# Change the parameters and observe the results
+print("Name: ABDUL RAWOOF")
+print("Register Number: 212224230003")
+print("Number of iterations:", iterations)
+print("\nState-Value Function:")
+print(V)
+print("\nState-Value Function as 4x4 Grid:")
+print(np.round(V.reshape(4, 4), 4))
+env.close()
 
 ```
-
----
 
 ## Output
 
-```text
+## gamma value = 0.99
 
-Number of Iterations: 
+<img width="762" height="316" alt="image" src="https://github.com/user-attachments/assets/5f7b897a-5c53-4185-a47c-5ee4b012576c" />
 
-State-Value Function as 4x4 Grid:
+## gamma value = 0.87
 
 
-
-```
----
+<img width="607" height="325" alt="image" src="https://github.com/user-attachments/assets/a4ad0728-6748-4dfb-8b20-bf1bdda670b4" />
 
 ## Result
 
 Iterative policy evaluation was implemented successfully using the Gymnasium FrozenLake environment. The state-value function for the fixed random policy was estimated using the Bellman expectation equation.
 
----
-
 ## Inference
 
 ```text
 
+1. Zero Values: Zero values represent terminal states, such as holes and the goal state, where no future rewards are available.
 
+2. Lower Values: Lower values occur in states with a lower probability of reaching the goal or where more steps are required to receive rewards.
+
+3. Higher Values: Higher values occur in states closer to the goal, where the probability of receiving a reward is greater.
+
+4. Gamma Comparison: When gamma increases from 0.87 to 0.99, future rewards receive more importance, resulting in higher state values.
+
+5. Iterations: Gamma = 0.87 converges in 35 iterations, whereas gamma = 0.99 takes 54 iterations because a higher discount factor generally requires more iterations for convergence.
+
+Conclusion: A higher gamma value considers long-term rewards more effectively, while a lower gamma value gives more importance to immediate rewards.
 
 ```
-
-
-
-
----
-
-
